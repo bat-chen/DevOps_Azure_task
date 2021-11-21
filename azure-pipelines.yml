@@ -1,11 +1,11 @@
 {
    
     
-    "parameters": {
-        "storageAccounts_aaa8_name": {
-            "defaultValue": "aaa8",
-            "type": "String"
-        },
+#     "parameters": {
+#         "storageAccounts_aaa8_name": {
+#             "defaultValue": "aaa8",
+#             "type": "String"
+#         },
         "storageAccounts_bbbb8_name": {
             "defaultValue": "bbbb8",
             "type": "String"
