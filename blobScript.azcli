@@ -1,0 +1,40 @@
+
+
+
+
+  #loop for uploading an image to 100 blobs 
+  for ($num=1 ; $num -le 100 ; $num++){az storage blob upload --container-name shell-container --name $num --file C:/User/bat-hen/Desktop/poopanda.png --account-name aaa8 --account-key $key1}
+
+  #copy 100 blobs from storage account A to storage account B
+  for ($num=1 ; $num -le 100 ; $num++){az storage blob copy start --destination-container contb --destination-blob $num --source-account-name aaa8 --source-account-key $key2 --source-container shell-container --source-blob $num}
+ 
+  
+   
+
+  
+  
+  
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+
+
+
+
+
+
+ 
+  
+  
+
+  
+
+  
