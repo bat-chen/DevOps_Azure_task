@@ -1,34 +1,258 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+Skip to content
+Search or jump to…
+Pull requests
+Issues
+Marketplace
+Explore
+ 
+@bat-chen 
+bat-chen
+/
+DevOps_Azure_task
+Public
+1
+00
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+Settings
+DevOps_Azure_task/azuredeploy.json
+@bat-chen
+bat-chen Json template
+Latest commit 3a04239 36 minutes ago
+ History
+ 1 contributor
+215 lines (195 sloc)  5.81 KB
+   
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion":"1.0.0.0",
 
-trigger:
-- main
+//storage-A named storage4b
+     "resources" : [
+     {
+       "type": "Microsoft.Storage/storageAccounts",
+       "apiVersion": "2021-04-01",
+       "name": "storage4a",
+       "location": "eastus",
+       "sku": {
+        "name": "Standard_LRS"
+       },
+       "kind": "StorageV2",
+       "properties": {
+        "supportsHttpsTrafficOnly": true
+      
 
-pool:
-  vmImage: ubuntu-latest
+       }
+      },
+//storage-B named storage4b
+      {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-04-01",
+      "name": "storage4b",
+      "location": "eastus",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "supportsHttpsTrafficOnly": true
+      
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+         }
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+      },
+// virtual machine named VM44
+
+    {
+      "name": "[toLower('VM44storage')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-04-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VM44 Storage Account"
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage"
+    },
+    {
+      "name": "VM44-PublicIP",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-11-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "PublicIPAddress"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[toLower('VM44')]"
+        }
+      }
+    },
+    {
+      "name": "VM44-nsg",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-11-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "nsgRule1",
+            "properties": {
+              "description": "description",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "VM44-VirtualNetwork",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-11-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'VM44-nsg')]"
+      ],
+      "tags": {
+        "displayName": "VM44-VirtualNetwork"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "VM44-VirtualNetwork-Subnet",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'VM44-nsg')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "VM44-NetworkInterface",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-11-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'VM44-PublicIP')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', 'VM44-VirtualNetwork')]"
+      ],
+      "tags": {
+        "displayName": "VM44 Network Interface"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipConfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'VM44-PublicIP')]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'VM44-VirtualNetwork', 'VM44-VirtualNetwork-Subnet')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "VM44",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2021-03-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', toLower('VM44storage'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'VM44-NetworkInterface')]"
+      ],
+      "tags": {
+        "displayName": "VM44"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_A2_v2"
+        },
+        "osProfile": {
+          "computerName": "VM44",
+          "adminUsername": "adminUsername",
+          "adminPassword": "adminPassword"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2012-R2-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "VM44OSDisk",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'VM44-NetworkInterface')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', toLower('VM44storage'))).primaryEndpoints.blob]"
+          }
+        }
+      }
+    }
+
+
+
+     ]
+
+      
+
+    
+
+
+
+    }
   
-  jobs:  
-- deployment: VMDeploy
-  displayName: web
-  environment:
-    name:  <environment name>
-    resourceType: VirtualMachine
-    tags: web
-jobs:  
-- deployment: VMDeploy
-  displayName: web
-  environment:
-    name:  <environment name>
-    resourceType: VirtualMachine
-    tags: web
+
+    
+© 2021 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Docs
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About
